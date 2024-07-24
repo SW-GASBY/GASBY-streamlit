@@ -1,6 +1,6 @@
 import streamlit as st
 import boto3
-import time as time_module
+import time
 import uuid
 import subprocess
 import json
@@ -10,7 +10,7 @@ import cv2
 # AWS S3 클라이언트 설정
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
-AWS_DEFAULT_REGION = 'ap-northeast-2'
+AWS_DEFAULT_REGION = ''
 
 s3_client = boto3.client('s3',
                          aws_access_key_id=AWS_ACCESS_KEY_ID,
@@ -64,10 +64,12 @@ def check_comment_in_s3(file_name):
         return False
 
 def get_commentary_from_s3(file_name):
+    comments_list = []
     comm = s3_client.get_object(Bucket=target_bucket_name, Key=file_name)
     body = comm['Body'].read()
-    content = body.decode('utf-8')
-    return json.loads(content)
+    content = json.loads(body.decode('utf-8'))  # JSON 문자열을 파싱
+    comments_list = [item['comment'] for item in content]  # 각 'comment'를 리스트에 추가
+    return comments_list
 
 # Streamlit 앱
 st.title("AI Basketball Commentator")
@@ -86,7 +88,19 @@ language = st.selectbox("언어를 선택하세요", language_options)
 # 비디오 업로드 섹션
 uploaded_file = st.file_uploader("영상을 업로드하세요", type=["mp4"])
 
-if uploaded_file is not None:
+start_button = st.button("시작")
+
+st.markdown("""
+    <style>
+    .wide-textbox {
+        width: 100%;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+textbox = st.empty()
+
+if uploaded_file is not None and not start_button:
     file_extension = uploaded_file.name.split('.')[-1]
     if file_extension not in ["mp4"]:
         st.error("지원되지 않는 형식입니다. mp4형식의 파일을 업로드하세요.")
@@ -95,8 +109,6 @@ if uploaded_file is not None:
         folder_name = unique_id
         file_name = f"{unique_id}.mp4"
         json_file_name = f"{unique_id}.json"
-
-        st.video(uploaded_file)  # 비디오를 상단에 표시
 
         uploaded_file.seek(0)  # 비디오를 다시 읽기 위해 파일 포인터를 처음으로 되돌립니다.
 
@@ -115,26 +127,20 @@ if uploaded_file is not None:
             
         with st.spinner('해설을 생성중입니다.'):
             while not check_comment_in_s3(f"{folder_name}.json"):
-                time_module.sleep(5)  # 5초마다 확인
+                time.sleep(5)  # 5초마다 확인
+                if check_comment_in_s3(f"{folder_name}.json"):
+                    break
                 
-        commentary = get_commentary_from_s3(f"{folder_name}.json")
-
+        st.session_state.comm = get_commentary_from_s3(f"{folder_name}.json")
+        
+        print(st.session_state.comm)
         st.success('해설이 생성되었습니다!')
 
-        # 비디오 재생 버튼
-        if st.button('비디오 재생'):
-            start_time = time_module.time()
-            st.video(uploaded_file)  # 비디오 재생
 
-            while True:
-                current_time = time_module.time() - start_time
-                current_time = int(current_time)  # 초 단위로 변환
-
-                comments_to_show = [item["comment"] for item in commentary if item["time"] == current_time]
-                for comment in comments_to_show:
-                    st.write(comment)
-
-                if current_time > video_duration:
-                    break
-
-                time_module.sleep(1)  # 1초 간격으로 업데이트
+if start_button:
+    if uploaded_file is not None:
+        st.video(uploaded_file, autoplay=True)
+        print(st.session_state.comm)
+        for text in st.session_state.comm:
+            textbox.markdown(f"<div class='wide-textbox'>{text}</div>", unsafe_allow_html=True)
+            time.sleep(1)
