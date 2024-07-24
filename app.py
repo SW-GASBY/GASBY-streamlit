@@ -1,6 +1,6 @@
 import streamlit as st
 import boto3
-import time
+import time as time_module
 import uuid
 import subprocess
 import json
@@ -10,7 +10,7 @@ import cv2
 # AWS S3 클라이언트 설정
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
-AWS_DEFAULT_REGION = ''
+AWS_DEFAULT_REGION = 'ap-northeast-2'
 
 s3_client = boto3.client('s3',
                          aws_access_key_id=AWS_ACCESS_KEY_ID,
@@ -58,12 +58,16 @@ def upload_json_to_s3(json_data, folder_name, file_name):
 
 def check_comment_in_s3(file_name):
     try:
-        comm = s3_client.get_object(Bucket = target_bucket_name, Key = file_name)
-        # s3_client.head_object(Bucket=target_bucket_name, Key=file_name)
+        s3_client.head_object(Bucket=target_bucket_name, Key=file_name)
         return True
     except:
-        print("false")
         return False
+
+def get_commentary_from_s3(file_name):
+    comm = s3_client.get_object(Bucket=target_bucket_name, Key=file_name)
+    body = comm['Body'].read()
+    content = body.decode('utf-8')
+    return json.loads(content)
 
 # Streamlit 앱
 st.title("AI Basketball Commentator")
@@ -92,17 +96,17 @@ if uploaded_file is not None:
         file_name = f"{unique_id}.mp4"
         json_file_name = f"{unique_id}.json"
 
-        st.video(uploaded_file)  # 비디오를 상단에 표시\
+        st.video(uploaded_file)  # 비디오를 상단에 표시
 
         uploaded_file.seek(0)  # 비디오를 다시 읽기 위해 파일 포인터를 처음으로 되돌립니다.
 
-        videoDuration, fps = get_video_duration(uploaded_file)
+        video_duration, fps = get_video_duration(uploaded_file)
             
         json_data = {
             "language": language,
             "team_a_color": team_a_color,
             "team_b_color": team_b_color,
-            "video duration": videoDuration,
+            "video_duration": video_duration,
             "fps": fps
         }
             
@@ -110,12 +114,27 @@ if uploaded_file is not None:
         upload_json_to_s3(json_data, folder_name, json_file_name)
             
         with st.spinner('해설을 생성중입니다.'):
-            while not check_comment_in_s3(f"{folder_name}.txt"):
-                time.sleep(5)  # 5초마다 확인
+            while not check_comment_in_s3(f"{folder_name}.json"):
+                time_module.sleep(5)  # 5초마다 확인
                 
-        comm = s3_client.get_object(Bucket = target_bucket_name, Key = f'{folder_name}.txt')
-        body = comm['Body'].read()
-        content = body.decode('utf-8')
-        print(content)
-        
-        st.write(content)
+        commentary = get_commentary_from_s3(f"{folder_name}.json")
+
+        st.success('해설이 생성되었습니다!')
+
+        # 비디오 재생 버튼
+        if st.button('비디오 재생'):
+            start_time = time_module.time()
+            st.video(uploaded_file)  # 비디오 재생
+
+            while True:
+                current_time = time_module.time() - start_time
+                current_time = int(current_time)  # 초 단위로 변환
+
+                comments_to_show = [item["comment"] for item in commentary if item["time"] == current_time]
+                for comment in comments_to_show:
+                    st.write(comment)
+
+                if current_time > video_duration:
+                    break
+
+                time_module.sleep(1)  # 1초 간격으로 업데이트
