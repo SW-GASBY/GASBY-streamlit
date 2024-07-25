@@ -74,7 +74,7 @@ https://www.ffmpeg.org/
 
 ### 1단계: 환경변수 삽입
 
-S3 환경변수 삽입
+S3 환경변수 삽입 - app.py 코드에 삽입
 ```bash
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
