@@ -72,7 +72,6 @@ window - ffmpeg 설치
 https://www.ffmpeg.org/
 ```
 
-<br/>
 ### 1단계: 환경변수 삽입
 
 S3 환경변수 삽입
@@ -82,7 +81,6 @@ AWS_SECRET_ACCESS_KEY
 AWS_DEFAULT_REGION
 ```
 
-<br/>
 ### 2단계: streamlit 실행
 ```bash
 streamlit run app.py
