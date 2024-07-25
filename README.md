@@ -52,6 +52,7 @@ Streamlit은 데이터 과학자와 머신러닝 엔지니어를 위한 빠르�
 Streamlit을 사용하여 대화형 웹 애플리케이션을 구축하는 과정은 간단합니다. 아래 단계에 따라 Streamlit을 설치하고 기본적인 애플리케이션을 실행할 수 있습니다.
 
 ### 0단계: 의존성 설치
+Streamlit을 사용하기 위해 필요한 파이썬 의존성을 설치 합니다.
 
 ```bash
 pip install streamlit
@@ -62,18 +63,31 @@ pip install subprocess
 pip install json
 ```
 
+mac - ffmpeg 설치
 ```bash
-mac
 brew install ffmpeg
-
-window
+```
+window - ffmpeg 설치
+```bash
 https://www.ffmpeg.org/
 ```
 
+<br/>
+### 1단계: 환경변수 삽입
 
-### 1단계: 설치
+S3 환경변수 삽입
+```bash
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+AWS_DEFAULT_REGION
+```
 
-Streamlit을 사용하려면 먼저 파이썬이 설치되어 있어야 합니다. 그런 다음, `pip`를 사용하여 Streamlit을 설치합니다.
+<br/>
+### 2단계: streamlit 실행
+```bash
+streamlit run app.py
+```
+
 
 
 
