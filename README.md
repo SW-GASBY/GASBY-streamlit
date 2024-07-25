@@ -40,6 +40,6 @@
 ## 1. STREAMLIT 소개
 
 
-## 2. 주요 기능
+## 2. STREAMLIT 사용법
 
 
