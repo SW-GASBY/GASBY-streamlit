@@ -23,7 +23,7 @@
 
 <div align="center">
 
-<h3> SERVICE part Team members </h3>
+<h3> STREAMLIT part Team members </h3>
 
 | Profile | Name | Role |
 | :---: | :---: | :---: |
